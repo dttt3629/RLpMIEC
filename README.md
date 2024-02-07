@@ -1,6 +1,6 @@
 # RLpMIEC
 ## Vaccine Generation Targeting Major Histocompatibility Complex-I Guided and Interpreted by Interaction Spectrum-Navigated Reinforcement Learning
-![](workflow.tif)
+![](workflow.jpg)
 ## Setup Environment
 Start with a new environment. Run:
 
