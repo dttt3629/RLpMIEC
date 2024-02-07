@@ -1,7 +1,7 @@
 # RLpMIEC
 ## Vaccine Generation Targeting Major Histocompatibility Complex-I Guided and Interpreted by Interaction Spectrum-Navigated Reinforcement Learning
-![](fig1.tif)
-# Setup Environment
+![](workflow.jpg)
+## Setup Environment
 Start with a new environment. Run:
 
     conda env create -f environment.yaml
