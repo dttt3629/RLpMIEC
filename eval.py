@@ -26,11 +26,16 @@ if __name__ == '__main__':
         parser.add_argument('--prior_name', type=str, default = 'prior_model', help="using for reference to check the bias", required=False)
         parser.add_argument('--miec_name', type=str, default = 'MIEC_generator', help="MIEC generator", required=False)
         parser.add_argument('--score_name', type=str, default = 'score_model', help="SF", required=False)
-        parser.add_argument('--novel_check_path', type=str, default = 'traindataset', help="the dataset to calculate novelty", required=False)
-        parser.add_argument('--gensize', type=int, default = 5000, help="gensize", required=False)
+        parser.add_argument('--is_eval', type=bool, default =False, help='generate with same seed')
+        parser.add_argument('--novel_check', type=bool, default =False, help='need the novel check path')
+        parser.add_argument('--novel_check_path', type=str, default = 'traindata', help="the dataset to calculate novelty", required=False)
+        parser.add_argument('--gensize', type=int, default = 5024, help="gensize,suppose to be the multiple of batchsize ", required=False)
         parser.add_argument('--batch_size', type=int, default = 32, help="batchsize", required=False)
         args = parser.parse_args()
-        set_seed(42)
+        if args.is_eval:
+            set_seed(42)
+        else:
+            set_seed((1,10000))
         savename=args.save_name
         with open('./dataset/require_seq_180.pkl','rb') as f:
             seqlist=pickle.load(f)
@@ -124,36 +129,39 @@ if __name__ == '__main__':
                 illeg.append(se)
             seq_data.iloc[se,0]=seq[:-1].replace('<','').replace('&','')
         seq_data=seq_data.drop(index=illeg).reset_index(drop=True)
-        data=pd.read_csv(f'./dataset/{args.novel_check_path}.csv',header=None)
+
         eval_data = pd.DataFrame(np.array(seq_data))
         valid=len(eval_data)
         repetition=0
         re=len(eval_data)
-        valid = len(eval_data)/5024
+        valid = len(eval_data)/args.gensize
         eval_data2=eval_data.drop_duplicates(([0,1])).reset_index(drop=True)
         repetition=re-len(eval_data2)
-        uniq=len(eval_data2)/5024
+        uniq=len(eval_data2)/args.gensize
         dup_index=[]
-        for se in range(len(eval_data2)):
-            seq=eval_data2.iloc[se,0]
-            clu = eval_data2.iloc[se,1]
-            if seq in np.array(data.iloc[:,1]):
-                dup_index.append((se,seq,clu))
-        real_dup=[]
-        recor = [] 
-        for s in range(len(data)):
-            seq=data.iloc[s,1]
-            clu=data.iloc[s,0]
-            for i,q,c in dup_index:
-                if seq==q and c==clu:
-                    real_dup.append((i))
-                    recor.append(s)
-        eval_data3=eval_data2.drop(real_dup).reset_index(drop=True)
-        novelty=len(eval_data3)/5024
-        eval_data3.to_csv(f'./output/{savename}_eval.csv',index=None)
-        dup_data=eval_data2.iloc[real_dup,:].reset_index(drop=True)
-        recor_data = data.iloc[recor,:].reset_index(drop=True)
-        recor_data.iloc[:10,:6],dup_data
+        if args.novel_check:
+            data=pd.read_csv(f'./dataset/{args.novel_check_path}.csv',header=None)
+            for se in range(len(eval_data2)):
+                seq=eval_data2.iloc[se,0]
+                clu = eval_data2.iloc[se,1]
+                if seq in np.array(data.iloc[:,1]):
+                    dup_index.append((se,seq,clu))
+            real_dup=[]
+            recor = [] 
+            for s in range(len(data)):
+                seq=data.iloc[s,1]
+                clu=data.iloc[s,0]
+                for i,q,c in dup_index:
+                    if seq==q and c==clu:
+                        real_dup.append((i))
+                        recor.append(s)
+            eval_data3=eval_data2.drop(real_dup).reset_index(drop=True)
+            novelty=len(eval_data3)/args.gensize
+            eval_data3.to_csv(f'./output/{savename}_eval.csv',index=None)
+            dup_data=eval_data2.iloc[real_dup,:].reset_index(drop=True)
+            recor_data = data.iloc[recor,:].reset_index(drop=True)
+        else:
+            nocelty = 0
         c= 0
         for i in eval_data3.iloc[:,-1]:
             if i<=-9.562:
