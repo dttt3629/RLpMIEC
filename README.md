@@ -20,5 +20,5 @@ Or it is accept to just install the basic packetage the model relied.
     python RL_train.py --prior_name prior_model  --score_name score_model --batch_size 64 --vocab_size 36 --block_size 11 --tmp 1 --max_epochs 2000 --save_name agent_model --learning_rate 4e-4 --sigma 60
 
 ## For evaluation and sequence generation
-### If calculate the novelty, add--novel_check T --novel_check_path {your own traindataset}
+     If calculate the novelty, add--novel_check T --novel_check_path {your own traindataset}
     python eval.py --save_name agent_model --prior_name prior_model --miec_name miec_generator --gensize 5024 --batch_size 32
