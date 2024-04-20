@@ -21,5 +21,6 @@ Or it is accept to just install the basic packetage the model relied.
 
 ## For evaluation and sequence generation (without novelty)
     python eval.py --save_name agent_model --prior_name prior_model --miec_name miec_generator --gensize 5024 --batch_size 32
+
 ### Calculation the novelty
-    python eval.py --save_name agent_model --prior_name prior_model --miec_name miec_generator --gensize 5024 --batch_size 32 --novel_check T --novel_check_path `your own traindataset`
+    python eval.py --save_name agent_model --prior_name prior_model --miec_name miec_generator --gensize 5024 --batch_size 32 --novel_check T --novel_check_path {your own traindataset}
