@@ -97,7 +97,7 @@ if __name__ == '__main__':
                         enc[i,-1]=2
                 clu = cluster-23
                 out,_,_ = score_model(idx=enc.to(score_device),prop=miec[:,1:].to(score_device),cluster=clu.squeeze().to(score_device))
-                score = out[:,-1,0]
+                score = out
                 cluster=cluster.squeeze().cpu()
                 targets=y[:,1:].detach().cpu()
                 pnllloss=F.nll_loss(torch.log(F.softmax(logits[1].cpu(),-1).reshape(-1, logits[1].size(-1))), targets.reshape(-1),reduction='none').reshape(y.shape[0],-1).sum(-1)

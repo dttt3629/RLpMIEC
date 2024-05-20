@@ -132,6 +132,8 @@ class att_model(nn.Module):
         self.head = nn.Linear(config.n_embd, 1 , bias=False)
         self.linein = nn.Linear(config.vocab_size ,1,bias=True)
         # self.block_size = config.block_size
+        self.line2 = nn.Linear(14*16,1)
+        self.flat = nn.Flatten()
         self.type_emb = nn.Embedding(2, config.n_embd)
         self.apply(self._init_weights)
        
@@ -180,39 +182,39 @@ class att_model(nn.Module):
         position_embeddings = self.pos_emb[:, 1:t+1, :]
         return x+position_embeddings
     def forward(self, idx, targets=None, prop = None,cluster=None):
-        b, t = idx.size()
-        token_embeddings = self.tok_emb(idx) 
-        position_embeddings = self.pos_emb[:, :, :] # each position maps to a (learnable) vector
-        type_embeddings = self.type_emb(torch.ones((b,10), dtype = torch.long, device = idx.device))
-        # position_embeddings2 = self.pos_emb2[:, :, :] # each position maps to a (learnable) vector
-        #pdb.set_trace()
-        x = token_embeddings  + type_embeddings
-       
-        con_typ=self.type_emb(torch.zeros((b, 1), dtype = torch.long, device = idx.device))
-        con_tok=self.clu_emb(cluster.reshape(b,1))
+            b, t = idx.size()
+            token_embeddings = self.tok_emb(idx) 
+            position_embeddings = self.pos_emb[:, :, :] # each position maps to a (learnable) vector
+            type_embeddings = self.type_emb(torch.ones((b,10), dtype = torch.long, device = idx.device))
+            # position_embeddings2 = self.pos_emb2[:, :, :] # each position maps to a (learnable) vector
+            #pdb.set_trace()
+            x = token_embeddings  + type_embeddings
         
-        con=con_typ+con_tok
-        # pdb.set_trace()
-        #miec = self.miec_nn(prop[:,0]).reshape(b,1,-1)
-        miec2 = self.miec_nn2(prop[:,0]).reshape(b,1,-1)
-        miec3 = self.miec_nn3(prop[:,1]).reshape(b,1,-1)
-        miec4 = self.miec_nn4(prop[:,2]).reshape(b,1,-1)
-        
-        # x = torch.cat([con,x[:,:,:],miec],1)
-        x = torch.cat([con,x,miec2,miec3,miec4],1)
-        
-        x=self.drop(x+position_embeddings[:,:-1,:])
-        attn_maps = []
-        # print(x,x.shape)
-        for layer in self.blocks:
-            x, attn = layer(x)
-            attn_maps.append(attn)
-        x = self.ln_f(x)
-        logits=self.head(x)
-        loss = None
-        if targets is not None:
-            loss = F.mse_loss(logits[:,-1,:].squeeze(),targets.squeeze())
-        return logits,loss,attn_maps
+            con_typ=self.type_emb(torch.zeros((b, 1), dtype = torch.long, device = idx.device))
+            con_tok=self.clu_emb(cluster.reshape(b,1))
+            
+            con=con_typ+con_tok
+            # pdb.set_trace()
+            #miec = self.miec_nn(prop[:,0]).reshape(b,1,-1)
+            miec2 = self.miec_nn2(prop[:,0]).reshape(b,1,-1)
+            miec3 = self.miec_nn3(prop[:,1]).reshape(b,1,-1)
+            miec4 = self.miec_nn4(prop[:,2]).reshape(b,1,-1)
+
+            x = torch.cat([con,x,miec2,miec3,miec4],1)
+            
+            x=self.drop(x+position_embeddings[:,:-1,:])
+            attn_maps = []
+            # print(x,x.shape)
+            for layer in self.blocks:
+                x, attn = layer(x)
+                attn_maps.append(attn)
+            x = self.ln_f(x)
+            logits=self.head(x)
+            out = self.line2(self.flat(logits))
+            loss = None
+            if targets is not None:
+                loss = F.mse_loss(out.squeeze(),targets.squeeze())
+            return out,loss,attn_maps
     
 
 if __name__=='__main__':
@@ -259,7 +261,7 @@ if __name__=='__main__':
                     y=y.to(device)
                     miec=miec.to(device)
                     clu = clu.to(device)
-                    logits,loss,_=model(x,y,prop=miec,cluster=clu)
+                    logits,loss,_=model(x,y,prop=miec[:,1:],cluster=clu)
                     loss=loss.mean()
                     losses.append(loss.item())
                     re.extend(y.cpu().tolist())

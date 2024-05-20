@@ -127,7 +127,7 @@ class Trainer:
 
             clu = cluster-23
             out,_,_ = score(idx=enc.to(score_device),prop=miec[:,1:].to(score_device),cluster=clu.squeeze().to(score_device))
-            miec_score = out[:,-1,0].detach().cpu().numpy()
+            miec_score = out.detach().cpu().numpy()
             miec_score=(1+miec_score/15)
             augmented_loss=prior_nllloss[uniq].to(next(agent.parameters()).device)+sigma*torch.tensor(miec_score,device=next(agent.parameters()).device)
             miec_loss = F.mse_loss(logits[0].transpose(1,2).squeeze(),miec.to(self.device).squeeze(),reduction='none').mean(dim=-1).mean(-1)
